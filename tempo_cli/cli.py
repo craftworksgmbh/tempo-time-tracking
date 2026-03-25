@@ -47,8 +47,7 @@ def log(issue, duration, date, description):
 @click.option("--to", "-t", "to_date", default=None, help="End date (YYYY-MM-DD)")
 @click.option("--today", "shortcut", flag_value="today", help="Show today's worklogs")
 @click.option("--week", "shortcut", flag_value="week", help="Show current week's worklogs")
-@click.option("--mine", is_flag=True, help="Show only my worklogs")
-def list_worklogs(from_date, to_date, shortcut, mine):
+def list_worklogs(from_date, to_date, shortcut):
     """Search and list worklogs."""
     config = load_config()
     client = TempoClient(config)
@@ -61,11 +60,8 @@ def list_worklogs(from_date, to_date, shortcut, mine):
     if not from_date or not to_date:
         raise click.UsageError("Provide --from and --to dates, or use --today / --week")
 
-    if mine:
-        account_id = client.jira.get_my_account_id()
-        worklogs = client.get_worklogs_for_user(account_id, from_date, to_date)
-    else:
-        worklogs = client.search_worklogs(from_date=from_date, to_date=to_date)
+    account_id = client.jira.get_my_account_id()
+    worklogs = client.get_worklogs_for_user(account_id, from_date, to_date)
 
     click.echo(format_worklogs_table(worklogs))
 
