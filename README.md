@@ -2,6 +2,40 @@
 
 A command-line interface to track time and manage your Tempo Timesheets directly from your terminal. 
 
+## Installation
+
+**Requirements:** Python 3.9+, [pipx](https://pipx.pypa.io)
+
+```bash
+    # 1. Install pipx (if not already installed)
+    brew install pipx
+    pipx ensurepath
+    # Restart your terminal after this step
+
+    # 2. Install tempo globally
+    pipx install .
+```
+
+`tempo` will be available on your PATH in any directory and shell session.
+
+> For development (live code changes): `pipx install -e .`
+> To update after code changes: `pipx reinstall tempo-cli`
+
+### Environment variables
+
+Set these before using the CLI:
+
+```bash
+    export TEMPO_API_TOKEN=your-tempo-api-token
+    export JIRA_URL=https://yoursite.atlassian.net
+    export JIRA_EMAIL=your-email@example.com
+    export JIRA_API_TOKEN=your-atlassian-api-token
+```
+
+Run `tempo config` to verify your configuration.
+
+---
+
 ## Commands Overview
 
 The CLI provides the following commands to manage your worklogs:
@@ -133,3 +167,21 @@ Display your current CLI configuration settings (e.g., Jira host, API tokens).
 ```bash
   tempo-cli config
 ```
+
+---
+
+## Agent Skill
+
+This repo ships with an Agent Skill for [Claude Code](https://code.claude.com) and [OpenCode](https://opencode.ai) located at `./skills/tempo-time-tracking/SKILL.md`.
+
+When working inside this project directory, Claude Code and OpenCode discover the skill automatically. To make it available globally (across all projects), install it once:
+
+```bash
+  # Claude Code (global)
+  cp -r ./skills/tempo-time-tracking ~/.claude/skills/
+
+  # OpenCode (global)
+  cp -r ./skills/tempo-time-tracking ~/.config/opencode/skills/
+```
+
+Once installed, you can say things like _"log 2 hours to PROJ-123"_ or _"show this week's worklogs"_ and the AI will invoke the correct `tempo` commands.
