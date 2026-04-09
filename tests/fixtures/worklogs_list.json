@@ -1,0 +1,21 @@
+{
+  "results": [
+    {
+      "tempoWorklogId": 98765,
+      "issue": { "id": 10042 },
+      "author": { "accountId": "user-abc-123", "displayName": "John Doe" },
+      "startDate": "2026-04-09",
+      "timeSpentSeconds": 7200,
+      "description": "Worked on feature X"
+    },
+    {
+      "tempoWorklogId": 98766,
+      "issue": { "id": 10043 },
+      "author": { "accountId": "user-abc-123", "displayName": "John Doe" },
+      "startDate": "2026-04-09",
+      "timeSpentSeconds": 3600,
+      "description": "Code review"
+    }
+  ],
+  "metadata": { "count": 2 }
+}

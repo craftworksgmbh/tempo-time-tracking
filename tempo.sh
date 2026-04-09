@@ -127,7 +127,7 @@ _tempo_request() {
 #  UTILITIES
 # ──────────────────────────────────────────────────────────────────────────────
 _parse_duration() {
-  local s="${1,,}"  # lowercase
+  local s; s=$(echo "$1" | tr '[:upper:]' '[:lower:]')  # lowercase (bash 3.2 compat)
   if [[ "$s" =~ ^([0-9]+d)?([0-9]+h)?([0-9]+m)?$ ]] && \
      [[ -n "${BASH_REMATCH[1]}${BASH_REMATCH[2]}${BASH_REMATCH[3]}" ]]; then
     local days=0 hours=0 mins=0
@@ -151,8 +151,8 @@ _format_duration() {
   local h=$(( secs / 3600 ))
   local m=$(( (secs % 3600) / 60 ))
   local out=""
-  (( h > 0 )) && out+="${h}h"
-  (( m > 0 )) && out+="${m}m"
+  if (( h > 0 )); then out+="${h}h"; fi
+  if (( m > 0 )); then out+="${m}m"; fi
   echo "${out:-0m}"
 }
 
@@ -176,7 +176,9 @@ _get_week_range() {
 
 _get_account_id() {
   if [[ -z "$_ACCOUNT_ID" ]]; then
-    _ACCOUNT_ID=$(_jira_get "/myself" | jq -r '.accountId')
+    local tmp
+    tmp=$(_jira_get "/myself") || exit 1
+    _ACCOUNT_ID=$(jq -r '.accountId' <<< "$tmp") || exit 1
   fi
   echo "$_ACCOUNT_ID"
 }
@@ -186,7 +188,9 @@ _resolve_issue() {
   if [[ "$issue" =~ ^[0-9]+$ ]]; then
     echo "$issue"
   else
-    _jira_get "/issue/${issue}?fields=id" | jq -r '.id'
+    local tmp
+    tmp=$(_jira_get "/issue/${issue}?fields=id") || exit 1
+    jq -r '.id' <<< "$tmp" || exit 1
   fi
 }
 
@@ -337,10 +341,13 @@ cmd_log() {
   [[ -z "$issue"    ]] && { echo "Error: --issue is required" >&2; exit 1; }
   [[ -z "$duration" ]] && { echo "Error: --time is required" >&2; exit 1; }
 
-  local seconds; seconds=$(_parse_duration "$duration")
+  local seconds
+  seconds=$(_parse_duration "$duration") || exit 1
   start_date="${start_date:-$(_get_today)}"
-  local account_id; account_id=$(_get_account_id)
-  local issue_id; issue_id=$(_resolve_issue "$issue")
+  local account_id
+  account_id=$(_get_account_id) || exit 1
+  local issue_id
+  issue_id=$(_resolve_issue "$issue") || exit 1
 
   local payload
   payload=$(jq -n \
@@ -356,8 +363,10 @@ cmd_log() {
            timeSpentSeconds:$timeSpentSeconds}
      end')
 
-  local result; result=$(_tempo_request POST /worklogs "$payload")
-  local wl_id; wl_id=$(jq -r '.tempoWorklogId // "?"' <<< "$result")
+  local result
+  result=$(_tempo_request POST /worklogs "$payload") || exit 1
+  local wl_id
+  wl_id=$(jq -r '.tempoWorklogId // "?"' <<< "$result")
   echo "Logged $(_format_duration "$seconds") to $issue on $start_date (worklog ID: $wl_id)"
 }
 
@@ -392,9 +401,12 @@ cmd_list() {
     exit 1
   fi
 
-  local account_id; account_id=$(_get_account_id)
-  local response; response=$(_tempo_request GET "/worklogs/user/${account_id}?from=${from_date}&to=${to_date}")
-  local worklogs; worklogs=$(jq '.results // []' <<< "$response")
+  local account_id
+  account_id=$(_get_account_id) || exit 1
+  local response
+  response=$(_tempo_request GET "/worklogs/user/${account_id}?from=${from_date}&to=${to_date}") || exit 1
+  local worklogs
+  worklogs=$(jq '.results // []' <<< "$response") || exit 1
   _format_worklogs_table "$worklogs"
 }
 
@@ -404,7 +416,8 @@ cmd_get() {
   [[ -z "$worklog_id" ]]            && { echo "Error: worklog ID required" >&2;           exit 1; }
   [[ ! "$worklog_id" =~ ^[0-9]+$ ]] && { echo "Error: worklog ID must be a number" >&2;  exit 1; }
 
-  local result; result=$(_tempo_request GET "/worklogs/${worklog_id}")
+  local result
+  result=$(_tempo_request GET "/worklogs/${worklog_id}") || exit 1
   _format_worklog_detail "$result"
 }
 
@@ -427,7 +440,8 @@ cmd_update() {
   done
 
   # Fetch existing worklog to preserve unmodified fields
-  local existing; existing=$(_tempo_request GET "/worklogs/${worklog_id}")
+  local existing
+  existing=$(_tempo_request GET "/worklogs/${worklog_id}") || exit 1
   local cur_secs;   cur_secs=$(jq -r   '.timeSpentSeconds // 0' <<< "$existing")
   local cur_date;   cur_date=$(jq -r   '.startDate // ""'       <<< "$existing")
   local cur_desc;   cur_desc=$(jq -r   '.description // ""'     <<< "$existing")
@@ -435,7 +449,7 @@ cmd_update() {
 
   local seconds
   if [[ -n "$duration" ]]; then
-    seconds=$(_parse_duration "$duration")
+    seconds=$(_parse_duration "$duration") || exit 1
   else
     seconds="$cur_secs"
   fi
@@ -575,4 +589,6 @@ main() {
   esac
 }
 
-main "$@"
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  main "$@"
+fi
