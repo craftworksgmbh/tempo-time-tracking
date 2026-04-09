@@ -199,6 +199,40 @@ tempo config
 
 ---
 
+## Development
+
+### Running tests
+
+**Requirement:** [bats-core](https://github.com/bats-core/bats-core)
+
+```bash
+brew install bats-core   # macOS
+# apt install bats       # Debian/Ubuntu
+```
+
+Run all tests:
+
+```bash
+make test
+```
+
+Or run specific files directly:
+
+```bash
+bats tests/unit.bats        # pure utility functions (no network)
+bats tests/commands.bats    # CLI commands with mocked curl
+```
+
+Filter by test name:
+
+```bash
+bats tests/unit.bats --filter "_parse_duration"
+```
+
+Tests use a file-based mock for `curl` — no real API calls are made.
+
+---
+
 ## Agent Skill
 
 This repo ships with an Agent Skill for [Claude Code](https://claude.ai/code) and [OpenCode](https://opencode.ai) located at `./skills/tempo-time-tracking/SKILL.md`.

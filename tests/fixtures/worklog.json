@@ -1,0 +1,12 @@
+{
+  "tempoWorklogId": 98765,
+  "issue": { "id": 10042 },
+  "author": { "accountId": "user-abc-123", "displayName": "John Doe" },
+  "startDate": "2026-04-09",
+  "startTime": "09:00:00",
+  "timeSpentSeconds": 7200,
+  "billableSeconds": 7200,
+  "description": "Worked on feature X",
+  "createdAt": "2026-04-09T09:00:00Z",
+  "updatedAt": "2026-04-09T09:00:00Z"
+}
