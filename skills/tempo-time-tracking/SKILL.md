@@ -6,7 +6,7 @@ compatibility: claude code, opencode
 
 # Tempo Time Tracking
 
-Manages Tempo Timesheets worklogs via the `tempo` CLI. Install with `pip install -e .` from the repo root.
+Manages Tempo Timesheets worklogs via the `tempo` CLI.
 
 ## Guardrails — read before running any command
 

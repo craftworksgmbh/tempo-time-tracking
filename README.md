@@ -1,64 +1,92 @@
 # Tempo Timesheets CLI
 
-A command-line interface to track time and manage your Tempo Timesheets directly from your terminal. 
+A command-line interface to track time and manage your Tempo Timesheets directly from your terminal.
 
 ## Installation
 
-**Requirements:** Python 3.9+, [pipx](https://pipx.pypa.io)
+**Requirements:** `curl` (pre-installed on macOS/Linux) and [`jq`](https://jqlang.github.io/jq/)
 
 ```bash
-    # 1. Install pipx (if not already installed)
-    brew install pipx
-    pipx ensurepath
-    # Restart your terminal after this step
+# 1. Install jq (if not already installed)
+brew install jq          # macOS
+# apt install jq         # Debian/Ubuntu
 
-    # 2. Install tempo globally
-    pipx install .
+# 2. Install tempo
+make install             # copies to /usr/local/bin/tempo
+
+# Or without make:
+cp tempo.sh /usr/local/bin/tempo && chmod +x /usr/local/bin/tempo
+
+# To install to a custom location (e.g. ~/.local/bin):
+make install INSTALL_DIR=~/.local/bin
 ```
 
-`tempo` will be available on your PATH in any directory and shell session.
+### First-time setup
 
-> For development (live code changes): `pipx install -e .`
-> To update after code changes: `pipx reinstall tempo-cli`
-
-### Environment variables
-
-Set these before using the CLI:
+Run the setup wizard to configure your API credentials:
 
 ```bash
-    export TEMPO_API_TOKEN=your-tempo-api-token
-    export JIRA_URL=https://yoursite.atlassian.net
-    export JIRA_EMAIL=your-email@example.com
-    export JIRA_API_TOKEN=your-atlassian-api-token
+tempo init
 ```
+
+This will prompt for your tokens and save them to your shell config (`~/.zshrc`, `~/.bashrc`, or `~/.bash_profile`), then tell you to `source` the file to activate them.
+
+Where to get the tokens:
+- **Tempo token:** Jira → Tempo → Settings → API Integration
+- **Jira token:** https://id.atlassian.com/manage-profile/security/api-tokens
+
+Alternatively, set the environment variables manually:
+
+```bash
+export TEMPO_API_TOKEN=your-tempo-api-token
+export JIRA_URL=https://yoursite.atlassian.net
+export JIRA_EMAIL=your-email@example.com
+export JIRA_API_TOKEN=your-atlassian-api-token
+```
+
+> `TEMPO_API_URL` is hardcoded to `https://api.tempo.io` and does not need to be set.
 
 Run `tempo config` to verify your configuration.
+
+### Uninstall
+
+```bash
+make uninstall
+```
 
 ---
 
 ## Commands Overview
 
-The CLI provides the following commands to manage your worklogs:
-
-* `log`: Log time to a Jira issue.
-* `list`: Search and list worklogs.
-* `get`: Get details of a specific worklog.
-* `update`: Update an existing worklog.
-* `delete`: Delete a worklog.
-* `config`: Show current configuration.
-
-*(Note: The examples below assume your CLI entry point is configured as `tempo-cli`.)*
+| Command | Description |
+|---------|-------------|
+| `init` | Set up API credentials interactively |
+| `log` | Log time to a Jira issue |
+| `list` | Search and list worklogs |
+| `get` | Get details of a specific worklog |
+| `update` | Update an existing worklog |
+| `delete` | Delete a worklog |
+| `config` | Show current configuration |
 
 ---
 
 ## Command Reference
 
+### `init`
+Interactive first-time setup wizard. Prompts for all required credentials and writes them to your shell config file.
+
+```bash
+tempo init
+```
+
+---
+
 ### `log`
-Log time to a Jira issue. 
+Log time to a Jira issue.
 
 **Usage:**
 ```bash
-  tempo-cli log --issue <ISSUE_KEY> --time <DURATION> [OPTIONS]
+tempo log --issue <ISSUE_KEY> --time <DURATION> [OPTIONS]
 ```
 
 **Options:**
@@ -72,7 +100,7 @@ Log time to a Jira issue.
 
 **Example:**
 ```bash
-  tempo-cli log -i PROJ-123 -t 2h -c "Implemented user authentication"
+tempo log -i PROJ-123 -t 2h -c "Implemented user authentication"
 ```
 
 ---
@@ -82,7 +110,7 @@ Search and list worklogs. You must provide a date range or use one of the built-
 
 **Usage:**
 ```bash
-  tempo-cli list [OPTIONS]
+tempo list [OPTIONS]
 ```
 
 **Options:**
@@ -92,11 +120,12 @@ Search and list worklogs. You must provide a date range or use one of the built-
 | `--from` | `-f` | Start date (`YYYY-MM-DD`). |
 | `--to` | `-t` | End date (`YYYY-MM-DD`). |
 | `--today` | - | **Shortcut:** Show today's worklogs. |
-| `--week` | - | **Shortcut:** Show the current week's worklogs. |
+| `--week` | - | **Shortcut:** Show the current week's worklogs (Mon–Sun). |
 
 **Example:**
 ```bash
-  tempo-cli list --week --mine
+tempo list --week
+tempo list --from 2026-04-01 --to 2026-04-09
 ```
 
 ---
@@ -106,7 +135,7 @@ Fetch and display the full details of a specific worklog.
 
 **Usage:**
 ```bash
-  tempo-cli get <WORKLOG_ID>
+tempo get <WORKLOG_ID>
 ```
 
 **Arguments:**
@@ -115,13 +144,13 @@ Fetch and display the full details of a specific worklog.
 ---
 
 ### `update`
-Update an existing worklog. 
+Update an existing worklog.
 
 > **Note:** Tempo's API replaces the entire worklog on update. This CLI automatically fetches the existing worklog first so that any fields you do not explicitly specify remain unchanged.
 
 **Usage:**
 ```bash
-  tempo-cli update <WORKLOG_ID> [OPTIONS]
+tempo update <WORKLOG_ID> [OPTIONS]
 ```
 
 **Options:**
@@ -134,7 +163,7 @@ Update an existing worklog.
 
 **Example:**
 ```bash
-  tempo-cli update 98765 -t 3h -c "Updated time and description"
+tempo update 98765 -t 3h -c "Updated time and description"
 ```
 
 ---
@@ -144,7 +173,7 @@ Delete a specific worklog. By default, you will be prompted to confirm the delet
 
 **Usage:**
 ```bash
-  tempo-cli delete <WORKLOG_ID> [OPTIONS]
+tempo delete <WORKLOG_ID> [OPTIONS]
 ```
 
 **Options:**
@@ -155,33 +184,33 @@ Delete a specific worklog. By default, you will be prompted to confirm the delet
 
 **Example:**
 ```bash
-  tempo-cli delete 98765 --yes
+tempo delete 98765 --yes
 ```
 
 ---
 
 ### `config`
-Display your current CLI configuration settings (e.g., Jira host, API tokens).
+Display your current CLI configuration settings (e.g., Jira host, API tokens — tokens are masked).
 
 **Usage:**
 ```bash
-  tempo-cli config
+tempo config
 ```
 
 ---
 
 ## Agent Skill
 
-This repo ships with an Agent Skill for [Claude Code](https://code.claude.com) and [OpenCode](https://opencode.ai) located at `./skills/tempo-time-tracking/SKILL.md`.
+This repo ships with an Agent Skill for [Claude Code](https://claude.ai/code) and [OpenCode](https://opencode.ai) located at `./skills/tempo-time-tracking/SKILL.md`.
 
 When working inside this project directory, Claude Code and OpenCode discover the skill automatically. To make it available globally (across all projects), install it once:
 
 ```bash
-  # Claude Code (global)
-  cp -r ./skills/tempo-time-tracking ~/.claude/skills/
+# Claude Code (global)
+cp -r ./skills/tempo-time-tracking ~/.claude/skills/
 
-  # OpenCode (global)
-  cp -r ./skills/tempo-time-tracking ~/.config/opencode/skills/
+# OpenCode (global)
+cp -r ./skills/tempo-time-tracking ~/.opencode/skills/
 ```
 
 Once installed, you can say things like _"log 2 hours to PROJ-123"_ or _"show this week's worklogs"_ and the AI will invoke the correct `tempo` commands.
