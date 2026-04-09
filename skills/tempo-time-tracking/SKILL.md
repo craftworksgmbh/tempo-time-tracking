@@ -8,24 +8,32 @@ compatibility: claude code, opencode
 
 Manages Tempo Timesheets worklogs via the `tempo` CLI.
 
-## Guardrails — read before running any command
+## Workflow for delete and update
+
+**NEVER run `tempo delete` or `tempo update` without explicit user approval in the conversation first.**
+
+Before running either command:
+1. Show the user exactly what will happen:
+   - For `delete`: run `tempo get <WORKLOG_ID>`, show the details, then ask: *"Shall I delete this worklog?"*
+   - For `update`: show the proposed changes (current value → new value), then ask: *"Shall I apply these changes?"*
+2. Wait for the user to reply with a clear yes ("yes", "go ahead", "do it", etc.)
+3. Only then run the command
+
+**Do NOT use pipes, input redirection, or any shell trick to pre-answer prompts. Run the command directly after the user confirms.**
+
+## Guardrails
 
 **STOP and ask the user if any of the following are unknown:**
-
 - Jira issue key (e.g., `PROJ-123`) — NEVER guess or invent one
-- Worklog ID for `get`, `update`, or `delete` — run `tempo list` first if not provided
-- Duration — ask the user if not stated; confirm the format matches `1h`, `2h30m`, `45m`, `1d`
-- Date — default to today only if the user has not specified one; use `YYYY-MM-DD` format exactly
+- Worklog ID — run `tempo list` first if not provided
+- Duration — ask if not stated; only `1h`, `2h30m`, `45m`, `1d` formats are accepted
+- Date — default to today only if the user has not specified one
 
-**STOP and run `tempo config` first** if you are unsure whether the environment is configured. If it reports missing variables, tell the user which ones to set before proceeding.
+**STOP and run `tempo config` first** if you are unsure whether the environment is configured.
 
-**Destructive operations (`delete`, `update`):**
-- Before running `delete`, state the worklog ID and ask the user to confirm
-- Before running `update`, show the proposed change and ask the user to confirm
+**On success:** respond with ✅ after every successfully completed operation.
 
-**On command failure:**
-- Show the exact error output to the user
-- Do not retry with guessed values — ask the user how to proceed
+**On command failure:** show the exact error output and ask the user how to proceed. Do not retry with guessed values.
 
 ## Prerequisites
 
@@ -39,45 +47,43 @@ Required environment variables:
 
 ### Log time
 ```bash
-  tempo log --issue <ISSUE_KEY> --time <DURATION> [--date YYYY-MM-DD] [--comment "description"]
+tempo log --issue <ISSUE_KEY> --time <DURATION> [--date YYYY-MM-DD] [--comment "description"]
 ```
-Duration format: `1h`, `2h30m`, `45m`, `1d` — no other formats are accepted.
 
 ### List worklogs
 ```bash
-  tempo list [--today | --week | --from YYYY-MM-DD --to YYYY-MM-DD]
+tempo list [--today | --week | --from YYYY-MM-DD --to YYYY-MM-DD]
 ```
-Defaults to current user's worklogs (`--mine` is implicit). Use this to find worklog IDs.
+Use this to find worklog IDs before running get, update, or delete.
 
 ### Get worklog details
 ```bash
-  tempo get <WORKLOG_ID>
+tempo get <WORKLOG_ID>
 ```
 
 ### Update worklog
 ```bash
-  tempo update <WORKLOG_ID> [--time DURATION] [--date YYYY-MM-DD] [--comment "text"]
+tempo update <WORKLOG_ID> [--time DURATION] [--date YYYY-MM-DD] [--comment "text"]
 ```
 Unspecified fields are preserved from the existing worklog.
 
 ### Delete worklog
 ```bash
-  tempo delete <WORKLOG_ID> [--yes]
+tempo delete <WORKLOG_ID>
 ```
-Omit `--yes` to get a confirmation prompt. Prefer omitting it.
 
 ## Examples
 
 ```bash
 # Log 2 hours to PROJ-123
-  tempo log -i PROJ-123 -t 2h -c "Implemented feature X"
+tempo log -i PROJ-123 -t 2h -c "Implemented feature X"
 
 # Show this week's worklogs (use this to find worklog IDs)
-  tempo list --week
+tempo list --week
 
 # Update time and comment on worklog 98765
-  tempo update 98765 -t 3h -c "Added tests"
+tempo update 98765 -t 3h -c "Added tests"
 
-# Delete — prefer interactive confirmation
-  tempo delete 98765
+# Delete worklog 98765
+tempo delete 98765
 ```

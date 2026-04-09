@@ -482,24 +482,6 @@ cmd_delete() {
   local worklog_id="${1:-}"
   [[ -z "$worklog_id" ]]            && { echo "Error: worklog ID required" >&2;           exit 1; }
   [[ ! "$worklog_id" =~ ^[0-9]+$ ]] && { echo "Error: worklog ID must be a number" >&2;  exit 1; }
-  shift
-
-  local yes=false
-  while [[ $# -gt 0 ]]; do
-    case "$1" in
-      --yes|-y) yes=true; shift ;;
-      *) echo "Error: Unknown option: $1" >&2; exit 1 ;;
-    esac
-  done
-
-  if [[ "$yes" == "false" ]]; then
-    local confirm=""
-    read -r -p "Delete worklog ${worklog_id}? [y/N] " confirm || true
-    if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
-      echo "Aborted."
-      exit 0
-    fi
-  fi
 
   _tempo_request DELETE "/worklogs/${worklog_id}" > /dev/null
   echo "Worklog ${worklog_id} deleted."
