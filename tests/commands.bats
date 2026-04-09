@@ -240,18 +240,11 @@ teardown() {
 
 # ── cmd_delete ────────────────────────────────────────────────────────────────
 
-@test "cmd_delete --yes: deletes without prompt" {
+@test "cmd_delete: deletes worklog" {
   _mock_curl_queue "" 204
-  run cmd_delete 98765 --yes
+  run cmd_delete 98765
   [ "$status" -eq 0 ]
   [[ "$output" =~ "98765 deleted" ]]
-}
-
-@test "cmd_delete -y: short flag also skips prompt" {
-  _mock_curl_queue "" 204
-  run cmd_delete 98765 -y
-  [ "$status" -eq 0 ]
-  [[ "$output" =~ "deleted" ]]
 }
 
 @test "cmd_delete: fails without worklog ID" {
@@ -261,21 +254,8 @@ teardown() {
 }
 
 @test "cmd_delete: fails with non-numeric ID" {
-  run cmd_delete "abc" --yes
+  run cmd_delete "abc"
   [ "$status" -eq 1 ]
   [[ "$output" =~ "must be a number" ]]
 }
 
-@test "cmd_delete: aborts when user types 'n'" {
-  run bash -c "
-    export _MOCK_DIR='$_MOCK_DIR'
-    $(declare -f curl)
-    export -f curl
-    source '$SCRIPT_DIR/../tempo.sh'
-    export TEMPO_API_TOKEN='tok' JIRA_URL='https://x.atlassian.net' \
-           JIRA_EMAIL='a@b.com' JIRA_API_TOKEN='jtok'
-    echo 'n' | cmd_delete 98765
-  "
-  [ "$status" -eq 0 ]
-  [[ "$output" =~ "Aborted" ]]
-}
