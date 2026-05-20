@@ -12,10 +12,10 @@ brew install jq          # macOS
 # apt install jq         # Debian/Ubuntu
 
 # 2. Install tempo
-make install             # copies to /usr/local/bin/tempo
+sudo make install             # copies to /usr/local/bin/tempo
 
 # Or without make:
-cp tempo.sh /usr/local/bin/tempo && chmod +x /usr/local/bin/tempo
+sudo cp tempo.sh /usr/local/bin/tempo && sudo chmod +x /usr/local/bin/tempo
 
 # To install to a custom location (e.g. ~/.local/bin):
 make install INSTALL_DIR=~/.local/bin
@@ -29,13 +29,13 @@ Run the setup wizard to configure your API credentials:
 tempo init
 ```
 
-This will prompt for your tokens and save them to your shell config (`~/.zshrc`, `~/.bashrc`, or `~/.bash_profile`), then tell you to `source` the file to activate them.
+This will prompt for your tokens and save them to `~/.config/tempo/.env`. Credentials are loaded automatically on every `tempo` command — no shell restart needed.
 
 Where to get the tokens:
 - **Tempo token:** Jira → Tempo → Settings → API Integration
 - **Jira token:** https://id.atlassian.com/manage-profile/security/api-tokens
 
-Alternatively, set the environment variables manually:
+Alternatively, you can edit `~/.config/tempo/.env` directly:
 
 ```bash
 export TEMPO_API_TOKEN=your-tempo-api-token
@@ -51,7 +51,7 @@ Run `tempo config` to verify your configuration.
 ### Uninstall
 
 ```bash
-make uninstall
+sudo make uninstall
 ```
 
 ---
@@ -73,7 +73,7 @@ make uninstall
 ## Command Reference
 
 ### `init`
-Interactive first-time setup wizard. Prompts for all required credentials and writes them to your shell config file.
+Interactive first-time setup wizard. Prompts for all required credentials and saves them to `~/.config/tempo/.env`.
 
 ```bash
 tempo init

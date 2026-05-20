@@ -48,6 +48,13 @@ _mask() {
 }
 
 _load_config() {
+  # Auto-source dedicated env file if present and vars not already set
+  local env_file="$HOME/.config/tempo/.env"
+  if [[ -z "${TEMPO_API_TOKEN:-}" ]] && [[ -f "$env_file" ]]; then
+    # shellcheck source=/dev/null
+    source "$env_file"
+  fi
+
   TEMPO_API_TOKEN="${TEMPO_API_TOKEN:-}"
   JIRA_URL="${JIRA_URL:-}"
   JIRA_EMAIL="${JIRA_EMAIL:-}"
@@ -252,26 +259,11 @@ _format_worklog_detail() {
 # ──────────────────────────────────────────────────────────────────────────────
 
 cmd_init() {
-  local shell_name; shell_name=$(basename "${SHELL:-bash}")
-  local rc_file
-  case "$shell_name" in
-    zsh)  rc_file="$HOME/.zshrc" ;;
-    bash)
-      if [[ "$(uname)" == "Darwin" ]]; then
-        rc_file="$HOME/.bash_profile"
-      else
-        rc_file="$HOME/.bashrc"
-      fi
-      ;;
-    *)
-      rc_file="$HOME/.profile"
-      echo "Note: Shell '$shell_name' not fully supported. Writing to $rc_file." >&2
-      ;;
-  esac
+  local env_file="$HOME/.config/tempo/.env"
 
   echo "Tempo CLI — First-time Setup"
   echo "=============================="
-  echo "Credentials will be saved to: $rc_file"
+  echo "Credentials will be saved to: $env_file"
   echo ""
   echo "Where to get tokens:"
   echo "  Tempo token: Jira > Tempo > Settings > API Integration"
@@ -293,35 +285,27 @@ cmd_init() {
   [[ -z "$jira_token" ]] && { echo "Error: JIRA_API_TOKEN cannot be empty" >&2; exit 1; }
 
   echo ""
-  echo "Writing configuration to $rc_file ..."
+  echo "Writing configuration to $env_file ..."
 
-  local marker_start="# >>> tempo-cli configuration >>>"
-  local marker_end="# <<< tempo-cli configuration <<<"
+  mkdir -p "$(dirname "$env_file")"
+  chmod 700 "$(dirname "$env_file")"
 
-  # Remove existing block if present
-  if grep -qF "$marker_start" "$rc_file" 2>/dev/null; then
-    local tmp; tmp=$(mktemp)
-    sed -e "/$marker_start/,/$marker_end/d" "$rc_file" > "$tmp"
-    mv "$tmp" "$rc_file"
-  fi
-
-  # Append new block (variables are intentionally expanded here)
-  cat >> "$rc_file" << ENVBLOCK
-
-$marker_start
+  # Variables are intentionally expanded here
+  cat > "$env_file" << ENVBLOCK
 export TEMPO_API_TOKEN="$tempo_token"
 export JIRA_URL="$jira_url"
 export JIRA_EMAIL="$jira_email"
 export JIRA_API_TOKEN="$jira_token"
-$marker_end
 ENVBLOCK
+  chmod 600 "$env_file"
 
   echo "Done!"
   echo ""
-  echo "Reload your shell:"
-  echo "  source $rc_file"
+  echo "Configuration is loaded automatically on every tempo command."
+  echo "To also expose these variables in your current shell session:"
+  echo "  source $env_file"
   echo ""
-  echo "Then verify with: tempo config"
+  echo "Verify with: tempo config"
 }
 
 cmd_log() {

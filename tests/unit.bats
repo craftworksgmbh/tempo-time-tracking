@@ -174,10 +174,12 @@ source "$SCRIPT_DIR/../tempo.sh"
 # ── _load_config ──────────────────────────────────────────────────────────────
 
 @test "_load_config: fails when all vars missing" {
-  run env -i HOME="$HOME" PATH="$PATH" bash -c "
+  local tmp_home; tmp_home=$(mktemp -d)
+  run env -i HOME="$tmp_home" PATH="$PATH" bash -c "
     source '$SCRIPT_DIR/../tempo.sh'
     _load_config
   "
+  rm -rf "$tmp_home"
   [ "$status" -eq 1 ]
   [[ "$output" =~ "Missing environment variables" ]]
 }
@@ -200,10 +202,12 @@ source "$SCRIPT_DIR/../tempo.sh"
 }
 
 @test "_load_config: reports all missing vars" {
-  run env -i HOME="$HOME" PATH="$PATH" bash -c "
+  local tmp_home; tmp_home=$(mktemp -d)
+  run env -i HOME="$tmp_home" PATH="$PATH" bash -c "
     source '$SCRIPT_DIR/../tempo.sh'
     _load_config
   "
+  rm -rf "$tmp_home"
   [ "$status" -eq 1 ]
   [[ "$output" =~ "TEMPO_API_TOKEN" ]]
   [[ "$output" =~ "JIRA_URL" ]]
